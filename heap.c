@@ -134,4 +134,9 @@ void heap_free(void *p) {
     *(void**)((char*)first_free + sizeof(ChunkBoundary)) = header;
     first_free = (void*)header;
   }
+
+  // cleanup
+  if (*(void**)(header + 1) == header) *(void**)(header + 1) = NULL;
+  if (*(void**)((char *)header + sizeof(ChunkBoundary) + sizeof(void*)) == header)
+    *(void**)((char *)header + sizeof(ChunkBoundary) + sizeof(void*)) = NULL;
 }
