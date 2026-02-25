@@ -34,7 +34,7 @@ void heap_init(void) {
   footer->size = header->size;
 
   *(void**)((char*)header + sizeof(ChunkBoundary)) = NULL;  // previous free chunk NULL since only 1 chunk
-  *(void**)((char*)header + 2 * sizeof(ChunkBoundary)) = NULL;  // next free chunk NULL since first chunk
+  *(void**)((char*)header + sizeof(ChunkBoundary)) + sizeof(void*) = NULL;  // next free chunk NULL since first chunk
 
   first_free = header;
 }
@@ -79,7 +79,7 @@ void *heap_malloc(size_t size) {
 }
 
 void heap_free(void *p) {
-  /* TODO:
+  /* ...done?:
    *   - Mark chunk at p unallocated
    *   - Check if previous neighbor unallocated for fusion (shouldn't need any next updates here... I think)
    *   - Check if next neighbor unallocated for fusion (do this one after or previous next update will need to be checked twice I think)
@@ -102,6 +102,18 @@ void heap_free(void *p) {
   // fuse next neighbor
   ChunkBoundary *next_header = (ChunkBoundary*)((char*)header + (((ChunkBoundary*)header)->size) + 2 * sizeof(ChunkBoundary));
   if ((next_header->size & 1) == 0) {
-    // TODO: fuse next neighbor (fun :D)
+    ChunkBoundary *prev_free_header = *(ChunkBoundary**)(next_header + 1);
+    ChunkBoundary *next_free_header = *(ChunkBoundary**)((char*)next_header + sizeof(ChunkBoundary) + sizeof(void*));
+
+    if (prev_free_header)
+      *(void**)((char*)prev_free_header + sizeof(ChunkBoundary) + sizeof(void*)) = header;  // update previous unallocated chunk's next pointer.
+    else
+      first_free = (void*)header;
+    if (next_free_header)
+      *(void**)((char*)next_free_header + sizeof(ChunkBoundary)) = header;  // update next unallocated chunk's previous pointer.
+
+    header->size += next_header->size + 2 * sizeof(ChunkBoundary);
+    ChunkBoundary *footer = (ChunkBoundary*)get_footer(header);
+    footer->size = header->size;
   }
 }
