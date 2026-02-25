@@ -24,5 +24,21 @@ int main() {
   printf("ptr1 content: %zu\n", *ptr1);
   printf("ptr2 content: %d\n", *ptr2);
   printf("ptr3 string:  %s\n", ptr3);
+
+  printf("\n\nNow freeing ptr2.\n\n");
+
+  heap_free(ptr2);
+  print_heap();
+
+  printf("\n\nNow freeing ptr1.\n\n");
+
+  heap_free(ptr1);
+  print_heap();
+
+  printf("\n\nNow freeing ptr3.\n\n");
+
+  heap_free(ptr3);
+  print_heap();
+
   return 0;
 }
