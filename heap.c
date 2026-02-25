@@ -57,11 +57,13 @@ void *heap_malloc(size_t size) {
   if (first_free == NULL) return NULL;
 
   ChunkBoundary *current = first_free;
-  // TODO: implement end of chunks check for growing sbrk.
   void **prev_next = NULL;
-  while (current->size < size) {
+  while ((char*)current < (char*)heap_start + INITIAL_ALLOCATION && current->size < size) {
     prev_next = (void **)(current + 1);  // save pointer to previous's next free pointer.
     current = *((ChunkBoundary**)(current + 1));  // skip boundary tag to read next address in unallocated chunk.
+  }
+  if ((char*)current >= (char*)heap_start + INITIAL_ALLOCATION) {
+    return NULL;  // TODO: expend allocated memory using sbrk.
   }
 
   // For now, assume after the loop we found a good chunk.
