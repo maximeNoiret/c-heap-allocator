@@ -84,13 +84,6 @@ void *heap_malloc(size_t size) {
 }
 
 void heap_free(void *p) {
-  /* ...done?:
-   *   - Mark chunk at p unallocated
-   *   - Check if previous neighbor unallocated for fusion (shouldn't need any next updates here... I think)
-   *   - Check if next neighbor unallocated for fusion (do this one after or previous next update will need to be checked twice I think)
-   *     - If case, update previous unallocated chunk's next pointer to p and update next's next unallocated chunk's previous pointer to p
-   *   - There shouldn't need to be iterations of this, since if in every free I fuse direct neighbors it should just work out...?
-   */
   ChunkBoundary *header = (ChunkBoundary*)((char*)p - sizeof(ChunkBoundary));
   ((ChunkBoundary*)header)->size &= ~1;  // mark p as unallocated (is a waste if previous neighbor is unallocated, who cares it's 1 AND operation.)
 
