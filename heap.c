@@ -14,7 +14,7 @@ static void *first_free = NULL;
 
 void print_heap(void) {
   printf("heap_start: %p\n", heap_start);
-  printf("first_free: %p\n", first_free);
+  printf("first_free: %p\n\n", first_free);
   for (ChunkBoundary *current = (ChunkBoundary*)heap_start;
        current < (ChunkBoundary*)((char*)heap_start + INITIAL_ALLOCATION);
        current = (ChunkBoundary*)((char*)current + (current->size & ~1) + 2 * sizeof(ChunkBoundary))) {
@@ -58,9 +58,9 @@ void *heap_malloc(size_t size) {
 
   ChunkBoundary *current = first_free;
   void **prev_next = NULL;
-  while ((char*)current < (char*)heap_start + INITIAL_ALLOCATION && current->size < size) {
-    prev_next = (void **)(current + 1);  // save pointer to previous's next free pointer.
-    current = *((ChunkBoundary**)(current + 1));  // skip boundary tag to read next address in unallocated chunk.
+  while ((char*)current < (char*)heap_start + INITIAL_ALLOCATION && current->size < size + 2 * sizeof(ChunkBoundary)) {
+    prev_next = (void **)((char*)current + sizeof(ChunkBoundary) + sizeof(void*));  // save pointer to previous's next free pointer.
+    current = *((ChunkBoundary**)((char*)current + sizeof(ChunkBoundary) + sizeof(void*)));  // skip boundary tag to read next address in unallocated chunk.
   }
   if ((char*)current >= (char*)heap_start + INITIAL_ALLOCATION) {
     return NULL;  // TODO: expend allocated memory using sbrk.
@@ -78,7 +78,7 @@ void *heap_malloc(size_t size) {
   if (prev_next) *prev_next = (void *)next;  // update previous chunk's next_free pointer
   else first_free = next;  // if NULL, we are at first free. update it.
   *((void**)(next + 1)) = *old_next;  // set next free in new chunk
-  next->size = (previous_size - size - 2 * sizeof(ChunkBoundary)) & ~1;  // mark as unallocated (shouldn't be necessary, but idk)
+  next->size = previous_size - size - 2 * sizeof(ChunkBoundary);
   ChunkBoundary *next_footer = (ChunkBoundary*)get_footer(next);
   next_footer->size = next->size;
 
@@ -131,7 +131,8 @@ void heap_free(void *p) {
   }
 
   // cleanup
-  if (*(void**)(header + 1) == header) *(void**)(header + 1) = NULL;
+  if (*(void**)(header + 1) == header)
+    *(void**)(header + 1) = NULL;
   if (*(void**)((char *)header + sizeof(ChunkBoundary) + sizeof(void*)) == header)
     *(void**)((char *)header + sizeof(ChunkBoundary) + sizeof(void*)) = NULL;
 }

@@ -35,6 +35,11 @@ int main() {
   heap_free(ptr1);
   print_heap();
 
+  printf("\n\nNow allocating 24 bytes.\n\n");
+
+  ptr1 = heap_malloc(24);  // over allocate just to test 24 bytes :p
+  print_heap();
+
   printf("\n\nNow freeing ptr3.\n\n");
 
   heap_free(ptr3);
