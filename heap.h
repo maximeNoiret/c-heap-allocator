@@ -6,10 +6,13 @@ typedef struct {
 } ChunkBoundary;
 
 
+void print_heap(void);
+
 void heap_init(void);
 
 void *heap_malloc(size_t size);
 
+void heap_free(void *p);
 
 
 
