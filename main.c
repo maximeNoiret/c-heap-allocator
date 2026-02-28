@@ -35,9 +35,26 @@ int main() {
   heap_free(ptr1);
   print_heap();
 
-  printf("\n\nNow allocating 24 bytes.\n\n");
+  printf("\n\nNow allocating 24 bytes. (in ptr1)\n\n");
 
   ptr1 = heap_malloc(24);  // over allocate just to test 24 bytes :p
+  print_heap();
+
+  printf("\n\nNow allocating 3 times 32 bytes. (in ptr2 & new ptr4 & new ptr5) to test 2 unallocated neighbor edge case.\n\n");
+
+  ptr2 = heap_malloc(32);
+  size_t *ptr4 = heap_malloc(32);
+  size_t *ptr5 = heap_malloc(32);
+
+  printf("Value of ptr4: %p\nValue of ptr5: %p\n\n", ptr4, ptr5);
+
+  print_heap();
+
+  printf("\n\nNow freeing ptr1 and ptr4 to isolate ptr2 between 2 unallocated neighbors.\n\n");
+
+  heap_free(ptr1);
+  heap_free(ptr4);
+
   print_heap();
 
   printf("\n\nNow freeing ptr3.\n\n");

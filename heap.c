@@ -93,33 +93,40 @@ void heap_free(void *p) {
   *(void**)((char*)header + sizeof(ChunkBoundary)) = NULL;
   *(void**)((char*)header + sizeof(ChunkBoundary) + sizeof(void*)) = NULL;
 
-  // fuse previous neighbor
   ChunkBoundary *previous_footer = (ChunkBoundary*)((char*)header - sizeof(ChunkBoundary));
-  if ((void*)previous_footer >= heap_start && (previous_footer->size & 1) == 0) {
-    ChunkBoundary *footer = (ChunkBoundary*)get_footer(header);
-    footer->size = header->size + previous_footer->size + 2 * sizeof(ChunkBoundary);
-    ChunkBoundary *previous_header = (ChunkBoundary*)get_header(previous_footer);
-    previous_header->size = footer->size;
-    header = previous_header;
-  }
-
-  // fuse next neighbor
   ChunkBoundary *next_header = (ChunkBoundary*)((char*)header + (((ChunkBoundary*)header)->size) + 2 * sizeof(ChunkBoundary));
-  if ((next_header->size & 1) == 0) {
-    ChunkBoundary *prev_free_header = *(ChunkBoundary**)(next_header + 1);
-    ChunkBoundary *next_free_header = *(ChunkBoundary**)((char*)next_header + sizeof(ChunkBoundary) + sizeof(void*));
 
-    *(void**)(header + 1) = *(void**)(next_header + 1);
-    *(void**)((char*)header + sizeof(ChunkBoundary) + sizeof(void*)) = next_free_header;
+  // if no unallocated neighbors
+  if (((void*)previous_footer < heap_start || (previous_footer->size & 1) != 0) &&
+      ((next_header->size & 1) != 0)) {
+    // TODO: fix edge case where no unallocated neighbors.
+  } else {
+    // fuse previous neighbor
+    if ((void*)previous_footer >= heap_start && (previous_footer->size & 1) == 0) {
+      ChunkBoundary *footer = (ChunkBoundary*)get_footer(header);
+      footer->size = header->size + previous_footer->size + 2 * sizeof(ChunkBoundary);
+      ChunkBoundary *previous_header = (ChunkBoundary*)get_header(previous_footer);
+      previous_header->size = footer->size;
+      header = previous_header;
+    }
 
-    if (prev_free_header)
-      *(void**)((char*)prev_free_header + sizeof(ChunkBoundary) + sizeof(void*)) = header;  // update previous unallocated chunk's next pointer.
-    if (next_free_header)
-      *(void**)((char*)next_free_header + sizeof(ChunkBoundary)) = header;  // update next unallocated chunk's previous pointer.
+    // fuse next neighbor
+    if ((next_header->size & 1) == 0) {
+      ChunkBoundary *prev_free_header = *(ChunkBoundary**)(next_header + 1);
+      ChunkBoundary *next_free_header = *(ChunkBoundary**)((char*)next_header + sizeof(ChunkBoundary) + sizeof(void*));
 
-    header->size += next_header->size + 2 * sizeof(ChunkBoundary);
-    ChunkBoundary *footer = (ChunkBoundary*)get_footer(header);
-    footer->size = header->size;
+      *(void**)(header + 1) = *(void**)(next_header + 1);
+      *(void**)((char*)header + sizeof(ChunkBoundary) + sizeof(void*)) = next_free_header;
+
+      if (prev_free_header)
+        *(void**)((char*)prev_free_header + sizeof(ChunkBoundary) + sizeof(void*)) = header;  // update previous unallocated chunk's next pointer.
+      if (next_free_header)
+        *(void**)((char*)next_free_header + sizeof(ChunkBoundary)) = header;  // update next unallocated chunk's previous pointer.
+
+      header->size += next_header->size + 2 * sizeof(ChunkBoundary);
+      ChunkBoundary *footer = (ChunkBoundary*)get_footer(header);
+      footer->size = header->size;
+    }
   }
 
   if (first_free > (void*)header) {
@@ -129,6 +136,7 @@ void heap_free(void *p) {
     *(void**)((char*)first_free + sizeof(ChunkBoundary)) = header;
     first_free = (void*)header;
   }
+
 
   // cleanup
   if (*(void**)(header + 1) == header)
